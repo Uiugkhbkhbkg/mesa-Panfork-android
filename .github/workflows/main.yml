@@ -32,7 +32,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "Mesa Panfork"
-          tag-name: mesa-panfork
+          tag-name: mesa_panfork
           prerelease: true
           files: |
             /home/runner/mesa-panfork.tar.gz
