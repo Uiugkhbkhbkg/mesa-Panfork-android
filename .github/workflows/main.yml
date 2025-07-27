@@ -11,10 +11,18 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies (Full Stack)
         run: |
           sudo apt-get update
-          sudo apt-get install -y git wget meson ninja-build python3 xwayland clang cmake gcc pkg-config
+          sudo apt-get install -y \
+            git wget meson ninja-build python3 xwayland clang cmake gcc pkg-config \
+            libdrm-dev libexpat1-dev libx11-dev libxext-dev libxcb1-dev \
+            libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev \
+            libxcb-sync-dev libxshmfence-dev libxxf86vm-dev \
+            libzstd-dev zlib1g-dev libwayland-dev wayland-protocols \
+            libelf-dev libunwind-dev libomxil-bellagio-dev \
+            libudev-dev libglvnd-dev libva-dev \
+            libvdpau-dev libclang-dev libpciaccess-dev
           pip3 install mako setuptools
 
       - name: Setup Android NDK
