@@ -1,41 +1,59 @@
-name: make a mesa
+name: build-mesa-panfork
+
 on:
-   workflow_dispatch:
+  workflow_dispatch:
+
 jobs:
-  job-ubuntu:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: download archives
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
         run: |
-          sudo apt-get install git wget meson ninja* python3 xwayland clang cmake gcc
-          pip3 install mako && pip3 install setuptools
-      - name: prepar achivers 
+          sudo apt-get update
+          sudo apt-get install -y git wget meson ninja-build python3 xwayland clang cmake gcc pkg-config
+          pip3 install mako setuptools
+
+      - name: Setup Android NDK
         run: |
           wget https://dl.google.com/android/repository/android-ndk-r27c-linux.zip
           unzip android-ndk-r27c-linux.zip
           mv android-ndk-r27c ndk
-          mv ndk /home/runner/
-          export NDK=/home/runner/ndk
-          export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+          echo "NDK=$PWD/ndk" >> $GITHUB_ENV
+          echo "TOOLCHAIN=$PWD/ndk/toolchains/llvm/prebuilt/linux-x86_64" >> $GITHUB_ENV
+
+      - name: Clone mesa-panfork
+        run: |
+          git clone https://github.com/anonymususer04/mesa-Panfork-android.git
+
+      - name: Build mesa with meson
+        run: |
           export PATH=$TOOLCHAIN/bin:$PATH
           export ARCH=aarch64
           export TOOL=$ARCH-linux-android26
           export CC=$TOOL-clang
           export CXX=$TOOL-clang++
-          mkdir /home/runner/mesa
-          git clone https://github.com/anonymususer04/mesa-Panfork-android.git
+          mkdir mesa-install
           cd mesa-Panfork-android
-          LDFLAGS=" -L$PREFIX/bin -l:libandroid-shmem.a -llog -Wl,--undefined-version"  meson  build -Dgallium-drivers=panfrost,swrast -Dvulkan-drivers= -Dbuildtype=release -Dllvm=disabled -Dplatforms=x11,wayland  -Dprefix=/home/runner/mesa && ninja -C build install
-          tar -cvf /home/runner/mesa-panfork.tar.gz /home/runner/mesa
-      - name: dispatch
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Mesa Panfork"
-          tag-name: mesa_panfork
-          prerelease: true
-          files: |
-            /home/runner/mesa-panfork.tar.gz
-      
-      
+          meson setup build \
+            --cross-file ../mesa-cross.txt \
+            -Dgallium-drivers=panfrost,swrast \
+            -Dvulkan-drivers= \
+            -Dbuildtype=release \
+            -Dllvm=disabled \
+            -Dplatforms=x11,wayland \
+            -Dprefix=$GITHUB_WORKSPACE/mesa-install
+          ninja -C build install
 
+      - name: Package build output
+        run: |
+          tar -czf mesa-panfork.tar.gz -C mesa-install .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mesa-panfork
+          path: mesa-panfork.tar.gz
