@@ -15,7 +15,7 @@ jobs:
         run: |
           PACKAGES_TO_INSTALL="
             git wget meson ninja-build python3 xwayland clang cmake gcc pkg-config
-            libdrm-dev libexpat1-dev libx11-dev libxext-dev libxcb1-dev
+            libdrm-dev libexpat1-dev libx11-dev libxfixes-dev libxext-dev libxcb1-dev
             libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev
             libxcb-sync-dev libxshmfence-dev libxxf86vm-dev
             libzstd-dev zlib1g-dev libwayland-dev wayland-protocols
