@@ -76,7 +76,7 @@ jobs:
             -Dvulkan-drivers= \
             -Dbuildtype=release \
             -Dllvm=disabled \
-            -Dplatforms=x11,wayland \
+            -Dplatforms=x11 \
             -Dprefix=$GITHUB_WORKSPACE/mesa-install
           ninja -C build install
 
