@@ -1,20 +1,20 @@
-name: build-mesa-panfork
+name: build-mesa-panfork  # Workflow 的名称
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # 允许手动触发此工作流
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 指定运行此作业的环境为最新的 Ubuntu
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - name: Checkout source  # 步骤：检出代码
+        uses: actions/checkout@v4  # 使用 actions/checkout@v4 来检出仓库代码
 
-      - name: Install dependencies (Full Stack)
+      - name: Install dependencies (Full Stack)  # 步骤：安装构建所需的依赖
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          sudo apt-get update  # 更新 apt 包列表
+          sudo apt-get install -y \  # 安装必要的系统依赖库和工具
             git wget meson ninja-build python3 xwayland clang cmake gcc pkg-config \
             libdrm-dev libexpat1-dev libx11-dev libxext-dev libxcb1-dev \
             libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev \
@@ -23,61 +23,61 @@ jobs:
             libelf-dev libunwind-dev libomxil-bellagio-dev \
             libudev-dev libglvnd-dev libva-dev \
             libvdpau-dev libclang-dev libpciaccess-dev
-          pip3 install mako setuptools
-          
+          pip3 install mako setuptools  # 使用 pip 安装 Python 包
 
-- name: Fake wayland-egl-backend for pkg-config
-  run: |
-    mkdir -p fake-pkgconfig
-    cat <<EOF > fake-pkgconfig/wayland-egl-backend.pc
-    prefix=/usr
-    exec_prefix=\${prefix}
-    libdir=\${exec_prefix}/lib
-    includedir=\${prefix}/include
-
-    Name: wayland-egl-backend
-    Description: Fake wayland-egl-backend stub
-    Version: 1.0.0
-    EOF
-    echo "PKG_CONFIG_PATH=$GITHUB_WORKSPACE/fake-pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
-          
-      - name: Setup Android NDK
+      - name: Fake wayland-egl-backend for pkg-config  # 步骤：为 pkg-config 创建假的 wayland-egl-backend
         run: |
-          wget https://dl.google.com/android/repository/android-ndk-r27c-linux.zip
-          unzip android-ndk-r27c-linux.zip
-          mv android-ndk-r27c ndk
-          echo "NDK=$PWD/ndk" >> $GITHUB_ENV
-          echo "TOOLCHAIN=$PWD/ndk/toolchains/llvm/prebuilt/linux-x86_64" >> $GITHUB_ENV
+          mkdir -p fake-pkgconfig  # 创建一个目录来存放假的 .pc 文件
+          cat <<EOF > fake-pkgconfig/wayland-egl-backend.pc  # 创建 .pc 文件内容
+          prefix=/usr
+          exec_prefix=${prefix}
+          libdir=${exec_prefix}/lib
+          includedir=${prefix}/include
 
-      - name: Clone mesa-panfork
+          Name: wayland-egl-backend
+          Description: Fake wayland-egl-backend stub
+          Version: 1.0.0
+          EOF
+          # 将假 .pc 文件的路径添加到 PKG_CONFIG_PATH 环境变量，以便 meson 能够找到
+          echo "PKG_CONFIG_PATH=$GITHUB_WORKSPACE/fake-pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          
+      - name: Setup Android NDK  # 步骤：设置 Android NDK
+        run: |
+          wget https://dl.google.com/android/repository/android-ndk-r27c-linux.zip  # 下载 Android NDK
+          unzip android-ndk-r27c-linux.zip  # 解压 NDK
+          mv android-ndk-r27c ndk  # 重命名解压后的目录
+          echo "NDK=$PWD/ndk" >> $GITHUB_ENV  # 将 NDK 路径添加到环境变量
+          echo "TOOLCHAIN=$PWD/ndk/toolchains/llvm/prebuilt/linux-x86_64" >> $GITHUB_ENV  # 将工具链路径添加到环境变量
+
+      - name: Clone mesa-panfork  # 步骤：克隆 mesa-Panfork 仓库
         run: |
           git clone https://github.com/anonymususer04/mesa-Panfork-android.git
 
-      - name: Build mesa with meson
+      - name: Build mesa with meson  # 步骤：使用 meson 构建 Mesa
         run: |
-          export PATH=$TOOLCHAIN/bin:$PATH
-          export ARCH=aarch64
-          export TOOL=$ARCH-linux-android26
-          export CC=$TOOL-clang
-          export CXX=$TOOL-clang++
-          mkdir mesa-install
-          cd mesa-Panfork-android
-          meson setup build \
-            --cross-file ../mesa-cross.txt \
-            -Dgallium-drivers=panfrost,swrast \
-            -Dvulkan-drivers= \
-            -Dbuildtype=release \
-            -Dllvm=disabled \
-            -Dplatforms=x11,wayland \
-            -Dprefix=$GITHUB_WORKSPACE/mesa-install
-          ninja -C build install
+          export PATH=$TOOLCHAIN/bin:$PATH  # 将 Android 工具链添加到 PATH
+          export ARCH=aarch64  # 设置目标架构
+          export TOOL=$ARCH-linux-android26  # 设置工具链前缀
+          export CC=$TOOL-clang  # 设置 C 编译器
+          export CXX=$TOOL-clang++  # 设置 C++ 编译器
+          mkdir mesa-install  # 创建安装目录
+          cd mesa-Panfork-android  # 进入 Mesa 源码目录
+          meson setup build \  # 配置 meson 构建系统
+            --cross-file ../mesa-cross.txt \  # 使用交叉编译文件
+            -Dgallium-drivers=panfrost,swrast \  # 启用 Gallium 驱动
+            -Dvulkan-drivers= \  # 禁用 Vulkan 驱动
+            -Dbuildtype=release \  # 设置构建类型为 release
+            -Dllvm=disabled \  # 禁用 LLVM
+            -Dplatforms=x11,wayland \  # 启用 x11 和 wayland 平台
+            -Dprefix=$GITHUB_WORKSPACE/mesa-install  # 设置安装前缀
+          ninja -C build install  # 使用 ninja 构建并安装
 
-      - name: Package build output
+      - name: Package build output  # 步骤：打包构建输出
         run: |
-          tar -czf mesa-panfork.tar.gz -C mesa-install .
+          tar -czf mesa-panfork.tar.gz -C mesa-install .  # 将安装目录打包成 tar.gz 文件
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload artifact  # 步骤：上传构建产物
+        uses: actions/upload-artifact@v4  # 使用 actions/upload-artifact@v4 上传文件
         with:
-          name: mesa-panfork
-          path: mesa-panfork.tar.gz
+          name: mesa-panfork  # 产物名称
+          path: mesa-panfork.tar.gz  # 产物路径

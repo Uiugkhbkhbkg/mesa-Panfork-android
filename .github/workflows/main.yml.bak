@@ -25,7 +25,7 @@ jobs:
             libvdpau-dev libclang-dev libpciaccess-dev
           pip3 install mako setuptools
           
-          
+
 - name: Fake wayland-egl-backend for pkg-config
   run: |
     mkdir -p fake-pkgconfig
