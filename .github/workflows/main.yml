@@ -26,21 +26,20 @@ jobs:
           pip3 install mako setuptools
           
           
-      - name: Fake wayland-egl-backend for pkg-config
-        run: |
-          mkdir -p fake-pkgconfig
-          cat <<EOF > fake-pkgconfig/wayland-egl-backend.pc
-          prefix=/usr
-          exec_prefix=\${prefix}
-          libdir=\${exec_prefix}/lib
-          includedir=\${prefix}/include
+- name: Fake wayland-egl-backend for pkg-config
+  run: |
+    mkdir -p fake-pkgconfig
+    cat <<EOF > fake-pkgconfig/wayland-egl-backend.pc
+    prefix=/usr
+    exec_prefix=\${prefix}
+    libdir=\${exec_prefix}/lib
+    includedir=\${prefix}/include
 
-      - name: wayland-egl-backend
-        Description: Fake wayland-egl-backend stub
-        Version: 1.0.0
-          EOF
-          echo "PKG_CONFIG_PATH=$GITHUB_WORKSPACE/fake-pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
-          
+    Name: wayland-egl-backend
+    Description: Fake wayland-egl-backend stub
+    Version: 1.0.0
+    EOF
+    echo "PKG_CONFIG_PATH=$GITHUB_WORKSPACE/fake-pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
           
       - name: Setup Android NDK
         run: |
